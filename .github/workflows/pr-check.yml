@@ -1,45 +1,66 @@
+# GitHub Actions on Kubernetes - PR自動チェックワークフロー
+#
+# このワークフローはプルリクエスト作成時に自動実行され、
+# Kubernetes上のself-hosted runnerで以下の検証を行います:
+# 1. ESLint静的解析
+# 2. Jest単体テスト実行
+# 3. npm auditセキュリティスキャン
+# 4. Webpack本番ビルド
+# 5. 結果をプルリクエストに反映
+#
+# Runner Pod: k8s/deployment.yamlで定義されたmyoung34/github-runnerが実行
 name: PR Check
 
+# プルリクエストがmain/developブランチに向けて作成された時にトリガー
 on:
   pull_request:
     branches: [ main, develop ]
 
 jobs:
   test:
+    # Kubernetes上のself-hosted runner (labels: self-hosted,kubernetes) で実行
     runs-on: self-hosted
     steps:
+    # 1. リポジトリコードをチェックアウト
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # 2. Node.js 18環境をセットアップ (npmキャッシュ有効)
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
 
+    # 3. package.jsonに基づいて依存関係をインストール
     - name: Install dependencies
       run: npm install
 
+    # 4. ESLintによる静的解析実行 (.eslintrc.js設定使用)
     - name: Run linter
       run: npm run lint
 
+    # 5. Jestによる単体テスト実行 (__tests__/配下のテスト)
     - name: Run tests
       run: npm test
 
+    # 6. npm auditでセキュリティ脆弱性スキャン
     - name: Run security scan
       run: npm audit
 
+    # 7. Webpackで本番用ビルド実行
     - name: Build application
       run: npm run build
 
+    # 8. 全ステップ完了後、プルリクエストのステータスを更新
     - name: Update PR status
-      if: always()
+      if: always()  # 前ステップが失敗してもこのステップは実行
       uses: actions/github-script@v7
       with:
         script: |
-          const { context } = require('@actions/core');
           const status = '${{ job.status }}';
           
+          // GitHub API経由でコミットステータスを更新
           await github.rest.repos.createCommitStatus({
             owner: context.repo.owner,
             repo: context.repo.repo,
