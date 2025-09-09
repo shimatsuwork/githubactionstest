@@ -6,7 +6,8 @@
       "Bash(git push:*)",
       "Bash(kubectl describe:*)",
       "Bash(kubectl get pods:*)",
-      "Bash(kubectl logs:*)"
+      "Bash(kubectl logs:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
