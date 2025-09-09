@@ -15,13 +15,15 @@ spec:
     spec:
       containers:
       - name: runner
-        image: sumologic/github-actions-runner:latest
+        image: myoung34/github-runner:latest
         env:
-        - name: GITHUB_TOKEN
+        - name: ACCESS_TOKEN
           valueFrom:
             secretKeyRef:
               name: github-runner-secret
               key: GITHUB_TOKEN
+        - name: RUNNER_SCOPE
+          value: "repo"
         - name: REPO_URL
           valueFrom:
             secretKeyRef:
@@ -29,6 +31,8 @@ spec:
               key: REPO_URL
         - name: RUNNER_NAME_PREFIX
           value: "k8s-runner"
+        - name: LABELS
+          value: "self-hosted,kubernetes"
         resources:
           requests:
             memory: "1Gi"
